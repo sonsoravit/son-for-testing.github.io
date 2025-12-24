@@ -3,26 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ISO-FOLD // Responsive Edition</title>
+    <title>ISO-FOLD // Precision v4.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
     <style>
         body { background-color: #020617; color: #f8fafc; font-family: 'Space+Grotesk', sans-serif; overflow-x: hidden; touch-action: none; }
         .glass { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        
         .scene { perspective: 1000px; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
         
-        /* Smaller cube for mobile */
         .cube { 
             width: 80px; height: 80px; position: relative; 
             transform-style: preserve-3d; 
             transition: transform 0.1s linear; 
         }
-        
-        @media (min-width: 768px) {
-            .cube { width: 100px; height: 100px; }
-        }
+        @media (min-width: 768px) { .cube { width: 100px; height: 100px; } }
 
         .cube.folding-animation { transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
 
@@ -35,12 +30,9 @@
             cursor: pointer;
             backface-visibility: visible;
         }
-        
-        @media (min-width: 768px) {
-            .face { width: 100px; height: 100px; border-width: 2px; }
-        }
+        @media (min-width: 768px) { .face { width: 100px; height: 100px; border-width: 2px; } }
 
-        /* 3D Folded Offsets (Responsive-aware) */
+        /* Folded Offsets */
         .f-front  { transform: rotateY(0deg) translateZ(40px); }
         .f-back   { transform: rotateY(180deg) translateZ(40px); }
         .f-top    { transform: rotateX(90deg) translateZ(40px); }
@@ -57,7 +49,7 @@
             .f-right  { transform: rotateY(90deg) translateZ(50px); }
         }
 
-        /* Unfolded Net Transforms (Responsive scaling) */
+        /* Unfolded Net Transforms */
         .unfolded .f-front  { transform: rotateY(0) translateZ(0) translate(0, 0); }
         .unfolded .f-back   { transform: rotateY(0) translateZ(0) translate(0, -160px); }
         .unfolded .f-top    { transform: rotateY(0) translateZ(0) translate(0, -80px); }
@@ -72,27 +64,18 @@
             .unfolded .f-left   { transform: translate(-100px, 0); }
             .unfolded .f-right  { transform: translate(100px, 0); }
         }
-
-        .scanline {
-            width: 100%; height: 2px; background: rgba(59, 130, 246, 0.1);
-            position: absolute; animation: scan 4s linear infinite;
-            z-index: 50; pointer-events: none;
-        }
-        @keyframes scan { from { top: 0%; } to { top: 100%; } }
     </style>
 </head>
 <body class="flex flex-col min-h-screen p-4 max-w-full overflow-hidden">
-    <div class="scanline"></div>
 
     <header class="flex justify-between items-center border-b border-white/10 pb-4 mb-4">
-        <h1 class="text-xl md:text-2xl font-black text-blue-500 italic uppercase">ISO-FOLD</h1>
+        <h1 class="text-xl md:text-2xl font-black text-blue-500 italic uppercase">ISO-FOLD v4.1</h1>
         <div id="score" class="text-2xl font-bold text-white tabular-nums">0000</div>
     </header>
 
     <main class="flex-grow flex flex-col md:grid md:grid-cols-2 gap-4 items-center justify-center">
-        
         <section class="w-full flex flex-col items-center">
-            <span class="text-[9px] font-bold text-blue-400 uppercase tracking-widest mb-2 px-2 border border-blue-400/30 rounded">Target</span>
+            <span class="text-[9px] font-bold text-blue-400 uppercase tracking-widest mb-2 px-2 border border-blue-400/30 rounded">Reference Target</span>
             <div class="w-full h-40 md:h-64 glass rounded-2xl scene cursor-grab active:cursor-grabbing" id="targetDragArea">
                 <div id="targetCube" class="cube"></div>
             </div>
@@ -104,7 +87,6 @@
                 <div id="playerCube" class="cube unfolded"></div>
             </div>
         </section>
-
     </main>
 
     <footer class="mt-4 glass p-4 rounded-2xl flex flex-col gap-3">
@@ -112,12 +94,12 @@
             <button id="toggleBtn" onclick="togglePreview()" class="py-3 px-2 bg-indigo-600 rounded-xl font-bold text-[10px] md:text-xs uppercase flex items-center justify-center gap-1">
                 <i data-lucide="box" class="w-3 h-3"></i> Preview
             </button>
-            <button onclick="generateLevel()" class="py-3 px-2 bg-slate-800 rounded-xl font-bold text-[10px] md:text-xs uppercase flex items-center justify-center gap-1">
-                <i data-lucide="refresh-cw" class="w-3 h-3"></i> Reset
+            <button onclick="fullReset()" class="py-3 px-2 bg-slate-800 rounded-xl font-bold text-[10px] md:text-xs uppercase flex items-center justify-center gap-1">
+                <i data-lucide="refresh-cw" class="w-3 h-3"></i> Full Reset
             </button>
         </div>
         <button onclick="checkWin()" id="submitBtn" class="w-full py-4 bg-blue-600 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-blue-500/20 active:scale-95">
-            Verify Fold
+            Verify Logic
         </button>
     </footer>
 
@@ -133,13 +115,17 @@
         const faceClasses = ['f-front', 'f-back', 'f-top', 'f-bottom', 'f-left', 'f-right'];
         const faceNames = ['F', 'B', 'T', 'Bt', 'L', 'R'];
         
+        // Initial Default Position (Facing slightly left)
+        const DEFAULT_X = -20;
+        const DEFAULT_Y = -45;
+
         let targetState = [];
         let playerState = [0, 0, 0, 0, 0, 0];
         let isFolded = false;
         let score = 0;
 
-        let targetRot = { x: -20, y: 45 };
-        let playerRot = { x: -20, y: 45 };
+        let targetRot = { x: DEFAULT_X, y: DEFAULT_Y };
+        let playerRot = { x: DEFAULT_X, y: DEFAULT_Y };
 
         function renderCubes() {
             const tCont = document.getElementById('targetCube');
@@ -147,11 +133,13 @@
             tCont.innerHTML = ''; pCont.innerHTML = '';
 
             faceClasses.forEach((cls, i) => {
+                // Target Cube Face with Label
                 const tf = document.createElement('div');
                 tf.className = `face ${cls}`;
-                tf.innerHTML = `<i data-lucide="${iconPool[targetState[i]]}"></i>`;
+                tf.innerHTML = `<i data-lucide="${iconPool[targetState[i]]}" class="w-6 h-6 md:w-8 md:h-8"></i><span class="absolute top-1 text-[6px] opacity-30 font-bold">${faceNames[i]}</span>`;
                 tCont.appendChild(tf);
 
+                // Player Cube Face with Label
                 const pf = document.createElement('div');
                 pf.className = `face ${cls}`;
                 pf.setAttribute('onclick', `cycleIcon(${i})`);
@@ -159,8 +147,13 @@
                 pCont.appendChild(pf);
             });
             
+            // Sync Rotations
             tCont.style.transform = `rotateX(${targetRot.x}deg) rotateY(${targetRot.y}deg)`;
-            if(isFolded) pCont.style.transform = `rotateX(${playerRot.x}deg) rotateY(${playerRot.y}deg)`;
+            if(isFolded) {
+                pCont.style.transform = `rotateX(${playerRot.x}deg) rotateY(${playerRot.y}deg)`;
+            } else {
+                pCont.style.transform = "rotateX(0deg) rotateY(0deg)";
+            }
             
             lucide.createIcons();
         }
@@ -177,6 +170,7 @@
             const btn = document.getElementById('toggleBtn');
             const inst = document.getElementById('instruction');
             isFolded = !isFolded;
+            
             pc.classList.add('folding-animation');
             
             if (isFolded) {
@@ -192,6 +186,27 @@
             }
             lucide.createIcons();
             setTimeout(() => pc.classList.remove('folding-animation'), 800);
+        }
+
+        function fullReset() {
+            // 1. Reset Face Icons
+            playerState = [0, 0, 0, 0, 0, 0];
+            
+            // 2. Reset View to Net Mode
+            isFolded = false;
+            const pc = document.getElementById('playerCube');
+            pc.classList.add('unfolded');
+            pc.classList.remove('folding-animation');
+            
+            // 3. Reset Rotation positions to Default (Facing Left)
+            targetRot = { x: DEFAULT_X, y: DEFAULT_Y };
+            playerRot = { x: DEFAULT_X, y: DEFAULT_Y };
+            
+            // Update Toggle Button UI
+            document.getElementById('toggleBtn').innerHTML = `<i data-lucide="box" class="w-3 h-3"></i> Preview`;
+            document.getElementById('instruction').innerText = "Net Mode";
+            
+            renderCubes();
         }
 
         function createDraggable(containerId, elId, stateObj) {
@@ -233,7 +248,6 @@
 
         function generateLevel() {
             targetState = Array.from({length: 6}, () => Math.floor(Math.random() * iconPool.length));
-            playerState = [0,0,0,0,0,0];
             renderCubes();
         }
 
