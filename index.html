@@ -2,18 +2,26 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ISO-FOLD // Mobile-Fix v4.2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ISO-FOLD // Reach-Fix v4.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #020617; color: #f8fafc; font-family: 'Space+Grotesk', sans-serif; overflow-x: hidden; touch-action: none; }
+        body { 
+            background-color: #020617; 
+            color: #f8fafc; 
+            font-family: 'Space+Grotesk', sans-serif; 
+            overflow: hidden; 
+            touch-action: none;
+            height: 100vh;
+            height: -webkit-fill-available;
+        }
         .glass { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .scene { perspective: 1000px; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
         
         .cube { 
-            width: 70px; height: 70px; position: relative; 
+            width: 60px; height: 60px; position: relative; 
             transform-style: preserve-3d; 
             transition: transform 0.1s linear; 
         }
@@ -22,7 +30,7 @@
         .cube.folding-animation { transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
 
         .face {
-            position: absolute; width: 70px; height: 70px;
+            position: absolute; width: 60px; height: 60px;
             border: 1.5px solid rgba(255, 255, 255, 0.2);
             display: flex; align-items: center; justify-content: center;
             background: rgba(30, 41, 59, 0.95);
@@ -32,13 +40,13 @@
         }
         @media (min-width: 768px) { .face { width: 100px; height: 100px; border-width: 2px; } }
 
-        /* Folded Offsets (70px based for mobile) */
-        .f-front  { transform: rotateY(0deg) translateZ(35px); }
-        .f-back   { transform: rotateY(180deg) translateZ(35px); }
-        .f-top    { transform: rotateX(90deg) translateZ(35px); }
-        .f-bottom { transform: rotateX(-90deg) translateZ(35px); }
-        .f-left   { transform: rotateY(-90deg) translateZ(35px); }
-        .f-right  { transform: rotateY(90deg) translateZ(35px); }
+        /* Folded Offsets (60px based for mobile) */
+        .f-front  { transform: rotateY(0deg) translateZ(30px); }
+        .f-back   { transform: rotateY(180deg) translateZ(30px); }
+        .f-top    { transform: rotateX(90deg) translateZ(30px); }
+        .f-bottom { transform: rotateX(-90deg) translateZ(30px); }
+        .f-left   { transform: rotateY(-90deg) translateZ(30px); }
+        .f-right  { transform: rotateY(90deg) translateZ(30px); }
 
         @media (min-width: 768px) {
             .f-front  { transform: rotateY(0deg) translateZ(50px); }
@@ -49,13 +57,13 @@
             .f-right  { transform: rotateY(90deg) translateZ(50px); }
         }
 
-        /* Unfolded Net Transforms */
+        /* Unfolded Net Transforms (60px mobile) */
         .unfolded .f-front  { transform: rotateY(0) translateZ(0) translate(0, 0); }
-        .unfolded .f-back   { transform: rotateY(0) translateZ(0) translate(0, -140px); }
-        .unfolded .f-top    { transform: rotateY(0) translateZ(0) translate(0, -70px); }
-        .unfolded .f-bottom { transform: rotateY(0) translateZ(0) translate(0, 70px); }
-        .unfolded .f-left   { transform: rotateY(0) translateZ(0) translate(-70px, 0); }
-        .unfolded .f-right  { transform: rotateY(0) translateZ(0) translate(70px, 0); }
+        .unfolded .f-back   { transform: rotateY(0) translateZ(0) translate(0, -120px); }
+        .unfolded .f-top    { transform: rotateY(0) translateZ(0) translate(0, -60px); }
+        .unfolded .f-bottom { transform: rotateY(0) translateZ(0) translate(0, 60px); }
+        .unfolded .f-left   { transform: rotateY(0) translateZ(0) translate(-60px, 0); }
+        .unfolded .f-right  { transform: rotateY(0) translateZ(0) translate(60px, 0); }
 
         @media (min-width: 768px) {
             .unfolded .f-back   { transform: translate(0, -200px); }
@@ -66,22 +74,22 @@
         }
     </style>
 </head>
-<body class="flex flex-col h-screen p-2 max-w-full overflow-hidden">
+<body class="flex flex-col p-4">
 
-    <header class="flex justify-between items-center border-b border-white/10 pb-2 mb-2">
+    <header class="flex justify-between items-center border-b border-white/10 pb-2">
         <h1 class="text-lg md:text-2xl font-black text-blue-500 italic uppercase">ISO-FOLD</h1>
         <div id="score" class="text-xl font-bold text-white tabular-nums">0000</div>
     </header>
 
-    <main class="flex-grow flex flex-col md:grid md:grid-cols-2 gap-2 items-center justify-center overflow-hidden">
-        <section class="w-full h-1/3 md:h-full flex flex-col items-center justify-center">
-            <span class="text-[8px] font-bold text-blue-400 uppercase tracking-widest mb-1 px-2 border border-blue-400/30 rounded">Reference Target</span>
-            <div class="w-full h-full glass rounded-2xl scene cursor-grab active:cursor-grabbing" id="targetDragArea">
+    <main class="flex-grow flex flex-col md:grid md:grid-cols-2 gap-2 items-center justify-center overflow-hidden py-4">
+        <section class="w-full h-[35%] md:h-full flex flex-col items-center">
+            <span class="text-[8px] font-bold text-blue-400 uppercase tracking-widest mb-1 px-2 border border-blue-400/30 rounded">Target</span>
+            <div class="w-full h-full glass rounded-xl scene cursor-grab active:cursor-grabbing" id="targetDragArea">
                 <div id="targetCube" class="cube"></div>
             </div>
         </section>
 
-        <section class="w-full h-2/3 md:h-full flex flex-col items-center justify-center">
+        <section class="w-full h-[65%] md:h-full flex flex-col items-center">
             <span id="instruction" class="text-[8px] font-bold text-emerald-400 uppercase tracking-widest mb-1 px-2 border border-emerald-400/30 rounded">Net Mode</span>
             <div class="w-full h-full scene cursor-grab active:cursor-grabbing" id="playerDragArea">
                 <div id="playerCube" class="cube unfolded"></div>
@@ -89,22 +97,22 @@
         </section>
     </main>
 
-    <footer class="mt-2 glass p-3 rounded-xl flex flex-col gap-2 shrink-0">
+    <footer class="glass p-4 rounded-xl flex flex-col gap-2 mb-6 md:mb-0">
         <div class="grid grid-cols-2 gap-2">
-            <button id="toggleBtn" onclick="togglePreview()" class="py-3 bg-indigo-600 rounded-lg font-bold text-[10px] md:text-xs uppercase flex items-center justify-center gap-1 shadow-lg">
+            <button id="toggleBtn" onclick="togglePreview()" class="py-3 bg-indigo-600 rounded-lg font-bold text-[10px] uppercase flex items-center justify-center gap-1 shadow-md">
                 <i data-lucide="box" class="w-3 h-3"></i> Preview
             </button>
-            <button onclick="fullReset()" class="py-3 bg-slate-800 rounded-lg font-bold text-[10px] md:text-xs uppercase flex items-center justify-center gap-1 shadow-lg">
+            <button onclick="fullReset()" class="py-3 bg-slate-800 rounded-lg font-bold text-[10px] uppercase flex items-center justify-center gap-1 shadow-md">
                 <i data-lucide="refresh-cw" class="w-3 h-3"></i> Full Reset
             </button>
         </div>
-        <button onclick="checkWin()" id="submitBtn" class="w-full py-3 bg-blue-600 rounded-lg font-black text-xs md:text-sm uppercase tracking-widest shadow-lg shadow-blue-500/20 active:scale-95">
+        <button onclick="checkWin()" id="submitBtn" class="w-full py-3 bg-blue-600 rounded-lg font-black text-xs uppercase tracking-widest shadow-md active:scale-95">
             Verify Logic
         </button>
     </footer>
 
     <div id="winModal" class="fixed inset-0 bg-slate-950/95 flex items-center justify-center hidden z-[100]">
-        <div class="text-center p-8 glass rounded-3xl border-emerald-500/50">
+        <div class="text-center p-8 glass rounded-3xl border-emerald-500/50 mx-4">
             <h2 class="text-3xl font-black text-emerald-500 italic">SUCCESS</h2>
             <button onclick="closeModal()" class="mt-6 px-10 py-3 bg-emerald-600 rounded-full font-bold">NEXT</button>
         </div>
@@ -134,13 +142,13 @@
             faceClasses.forEach((cls, i) => {
                 const tf = document.createElement('div');
                 tf.className = `face ${cls}`;
-                tf.innerHTML = `<i data-lucide="${iconPool[targetState[i]]}" class="w-6 h-6 md:w-8 md:h-8"></i><span class="absolute top-1 text-[6px] opacity-30 font-bold">${faceNames[i]}</span>`;
+                tf.innerHTML = `<i data-lucide="${iconPool[targetState[i]]}" class="w-5 h-5 md:w-8 md:h-8"></i><span class="absolute top-1 text-[6px] opacity-30 font-bold">${faceNames[i]}</span>`;
                 tCont.appendChild(tf);
 
                 const pf = document.createElement('div');
                 pf.className = `face ${cls}`;
                 pf.setAttribute('onclick', `cycleIcon(${i})`);
-                pf.innerHTML = `<i data-lucide="${iconPool[playerState[i]]}" class="w-6 h-6 md:w-8 md:h-8"></i><span class="absolute top-1 text-[6px] opacity-30 font-bold">${faceNames[i]}</span>`;
+                pf.innerHTML = `<i data-lucide="${iconPool[playerState[i]]}" class="w-5 h-5 md:w-8 md:h-8"></i><span class="absolute top-1 text-[6px] opacity-30 font-bold">${faceNames[i]}</span>`;
                 pCont.appendChild(pf);
             });
             
@@ -157,7 +165,7 @@
         function cycleIcon(i) {
             playerState[i] = (playerState[i] + 1) % iconPool.length;
             const face = document.querySelector(`#playerCube .${faceClasses[i]}`);
-            face.innerHTML = `<i data-lucide="${iconPool[playerState[i]]}" class="w-6 h-6 md:w-8 md:h-8"></i><span class="absolute top-1 text-[6px] opacity-30 font-bold">${faceNames[i]}</span>`;
+            face.innerHTML = `<i data-lucide="${iconPool[playerState[i]]}" class="w-5 h-5 md:w-8 md:h-8"></i><span class="absolute top-1 text-[6px] opacity-30 font-bold">${faceNames[i]}</span>`;
             lucide.createIcons();
         }
 
@@ -197,9 +205,7 @@
             document.getElementById('toggleBtn').innerHTML = `<i data-lucide="box" class="w-3 h-3"></i> Preview`;
             document.getElementById('instruction').innerText = "Net Mode";
             
-            // RANDOMIZE TARGET ON RESET
             targetState = Array.from({length: 6}, () => Math.floor(Math.random() * iconPool.length));
-            
             renderCubes();
         }
 
