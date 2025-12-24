@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISO-FOLD // Dual-Axis Logic</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { background-color: #020617; color: #f8fafc; font-family: 'Space+Grotesk', sans-serif; overflow: hidden; touch-action: none; }
+        .glass { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        
+        .scene { perspective: 1200px; }
+        .cube { 
+            width: 100px; height: 100px; position: relative; 
+            transform-style: preserve-3d; 
+            transition: transform 0.1s linear; 
+        }
+        
+        .cube.folding-animation { transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        .face {
+            position: absolute; width: 100px; height: 100px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(30, 41, 59, 0.95);
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s;
+            cursor: pointer;
+            backface-visibility: visible;
+            pointer-events: auto;
+        }
+        .face:hover { background: rgba(59, 130, 246, 0.5); border-color: #3b82f6; }
+
+        /* Transforms for 3D state */
+        .f-front  { transform: rotateY(0deg) translateZ(50px); }
+        .f-back   { transform: rotateY(180deg) translateZ(50px); }
+        .f-top    { transform: rotateX(90deg) translateZ(50px); }
+        .f-bottom { transform: rotateX(-90deg) translateZ(50px); }
+        .f-left   { transform: rotateY(-90deg) translateZ(50px); }
+        .f-right  { transform: rotateY(90deg) translateZ(50px); }
+
+        /* Transforms for Net state */
+        .unfolded .f-front  { transform: rotateY(0) translateZ(0) translate(0, 0); }
+        .unfolded .f-back   { transform: rotateY(0) translateZ(0) translate(0, -200px); }
+        .unfolded .f-top    { transform: rotateY(0) translateZ(0) translate(0, -100px); }
+        .unfolded .f-bottom { transform: rotateY(0) translateZ(0) translate(0, 100px); }
+        .unfolded .f-left   { transform: rotateY(0) translateZ(0) translate(-100px, 0); }
+        .unfolded .f-right  { transform: rotateY(0) translateZ(0) translate(100px, 0); }
+
+        .scanline {
+            width: 100%; height: 2px; background: rgba(59, 130, 246, 0.1);
+            position: absolute; animation: scan 4s linear infinite;
+            z-index: 50; pointer-events: none;
+        }
+        @keyframes scan { from { top: 0%; } to { top: 100%; } }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-between min-h-screen p-4">
+    <div class="scanline"></div>
+
+    <div class="w-full max-w-5xl flex justify-between items-center border-b border-white/10 pb-4">
+        <h1 class="text-3xl font-black tracking-tighter text-blue-500 italic uppercase">ISO-FOLD <span class="text-white text-xs font-light tracking-widest not-italic ml-2">Manual Inspection v3</span></h1>
+        <div id="score" class="text-3xl font-bold text-white tabular-nums">0000</div>
+    </div>
+
+    <div class="flex flex-col lg:flex-row items-center justify-around w-full flex-grow gap-8">
+        
+        <div class="flex flex-col items-center select-none">
+            <div class="mb-4 text-[10px] font-bold text-blue-400 uppercase tracking-widest border border-blue-400/30 px-3 py-1 rounded-full">Target Objective (Drag to Inspect)</div>
+            <div class="scene w-64 h-64 flex items-center justify-center glass rounded-3xl cursor-grab active:cursor-grabbing" id="targetDragArea">
+                <div id="targetCube" class="cube"></div>
+            </div>
+        </div>
+
+        <div class="flex flex-col items-center select-none">
+            <div id="instruction" class="mb-4 text-[10px] font-bold text-emerald-400 uppercase tracking-widest border border-emerald-400/30 px-3 py-1 rounded-full">Workspace (Unfolded View)</div>
+            <div class="scene w-96 h-96 flex items-center justify-center cursor-grab active:cursor-grabbing" id="playerDragArea">
+                <div id="playerCube" class="cube unfolded"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="w-full max-w-5xl glass p-4 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="flex gap-2">
+            <button id="toggleBtn" onclick="togglePreview()" class="px-5 py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-xs transition-all flex items-center gap-2">
+                <i data-lucide="box" class="w-4 h-4"></i> PREVIEW FOLD
+            </button>
+            <button onclick="generateLevel()" class="px-5 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold text-xs transition-all flex items-center gap-2">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i> NEW TARGET
+            </button>
+        </div>
+        <button onclick="checkWin()" id="submitBtn" class="w-full md:w-auto px-10 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-black text-sm uppercase tracking-widest transition-all shadow-lg shadow-blue-500/20 active:scale-95">
+            Verify Logic
+        </button>
+    </div>
+
+    <div id="winModal" class="fixed inset-0 bg-slate-950/95 flex items-center justify-center hidden z-[100]">
+        <div class="text-center p-10 glass rounded-3xl border-emerald-500/50">
+            <h2 class="text-5xl font-black text-emerald-500 mb-2 italic">SYNCHRONIZED</h2>
+            <button onclick="closeModal()" class="mt-6 px-12 py-4 bg-emerald-600 hover:bg-emerald-500 rounded-full font-bold">NEXT CHALLENGE</button>
+        </div>
+    </div>
+
+    <script>
+        const iconPool = ['star', 'heart', 'zap', 'sun', 'moon', 'cloud', 'anchor', 'hexagon', 'triangle', 'ghost'];
+        const faceClasses = ['f-front', 'f-back', 'f-top', 'f-bottom', 'f-left', 'f-right'];
+        const faceNames = ['Front', 'Back', 'Top', 'Bottom', 'Left', 'Right'];
+        
+        let targetState = [];
+        let playerState = [0, 0, 0, 0, 0, 0];
+        let isFolded = false;
+        let score = 0;
+
+        // Separate Rotations
+        let targetRot = { x: -20, y: 45 };
+        let playerRot = { x: -20, y: 45 };
+
+        function renderCubes() {
+            const tCont = document.getElementById('targetCube');
+            const pCont = document.getElementById('playerCube');
+            tCont.innerHTML = ''; pCont.innerHTML = '';
+
+            faceClasses.forEach((cls, i) => {
+                const tf = document.createElement('div');
+                tf.className = `face ${cls}`;
+                tf.innerHTML = `<i data-lucide="${iconPool[targetState[i]]}"></i>`;
+                tCont.appendChild(tf);
+
+                const pf = document.createElement('div');
+                pf.className = `face ${cls}`;
+                pf.setAttribute('onclick', `cycleIcon(${i})`);
+                pf.innerHTML = `<i data-lucide="${iconPool[playerState[i]]}"></i><span class="absolute top-1 text-[7px] opacity-30 font-bold">${faceNames[i]}</span>`;
+                pCont.appendChild(pf);
+            });
+            
+            // Set Initial Rotations
+            tCont.style.transform = `rotateX(${targetRot.x}deg) rotateY(${targetRot.y}deg)`;
+            if(isFolded) pCont.style.transform = `rotateX(${playerRot.x}deg) rotateY(${playerRot.y}deg)`;
+            
+            lucide.createIcons();
+        }
+
+        function cycleIcon(i) {
+            playerState[i] = (playerState[i] + 1) % iconPool.length;
+            const face = document.querySelector(`#playerCube .${faceClasses[i]}`);
+            face.innerHTML = `<i data-lucide="${iconPool[playerState[i]]}"></i><span class="absolute top-1 text-[7px] opacity-30 font-bold">${faceNames[i]}</span>`;
+            lucide.createIcons();
+        }
+
+        function togglePreview() {
+            const pc = document.getElementById('playerCube');
+            const btn = document.getElementById('toggleBtn');
+            const inst = document.getElementById('instruction');
+            isFolded = !isFolded;
+            pc.classList.add('folding-animation');
+            
+            if (isFolded) {
+                pc.classList.remove('unfolded');
+                pc.style.transform = `rotateX(${playerRot.x}deg) rotateY(${playerRot.y}deg)`;
+                btn.innerHTML = `<i data-lucide="layout" class="w-4 h-4"></i> BACK TO FLAT VIEW`;
+                inst.innerText = "Drag to Rotate // Click Faces to Edit";
+            } else {
+                pc.classList.add('unfolded');
+                pc.style.transform = "rotateX(0deg) rotateY(0deg)";
+                btn.innerHTML = `<i data-lucide="box" class="w-4 h-4"></i> PREVIEW FOLD`;
+                inst.innerText = "Click Faces to Change Icons // Unfolded View";
+            }
+            lucide.createIcons();
+            setTimeout(() => pc.classList.remove('folding-animation'), 800);
+        }
+
+        // Generic Drag Handler Factory
+        function createDraggable(elementId, stateObj) {
+            const el = document.getElementById(elementId);
+            const container = el.parentElement;
+            let active = false;
+            let sx, sy;
+
+            const start = e => {
+                if (elementId === 'playerCube' && !isFolded) return;
+                active = true;
+                sx = e.clientX || e.touches[0].clientX;
+                sy = e.clientY || e.touches[0].clientY;
+            };
+
+            const move = e => {
+                if (!active) return;
+                const cx = e.clientX || e.touches[0].clientX;
+                const cy = e.clientY || e.touches[0].clientY;
+                const dx = cx - sx;
+                const dy = cy - sy;
+                
+                stateObj.y += dx * 0.5;
+                stateObj.x -= dy * 0.5;
+                el.style.transform = `rotateX(${stateObj.x}deg) rotateY(${stateObj.y}deg)`;
+                
+                sx = cx; sy = cy;
+            };
+
+            const end = () => active = false;
+
+            container.addEventListener('mousedown', start);
+            window.addEventListener('mousemove', move);
+            window.addEventListener('mouseup', end);
+            
+            container.addEventListener('touchstart', start);
+            window.addEventListener('touchmove', move);
+            window.addEventListener('touchend', end);
+        }
+
+        createDraggable('targetCube', targetRot);
+        createDraggable('playerCube', playerRot);
+
+        function generateLevel() {
+            targetState = Array.from({length: 6}, () => Math.floor(Math.random() * iconPool.length));
+            playerState = [0,0,0,0,0,0];
+            renderCubes();
+        }
+
+        function checkWin() {
+            if (playerState.every((v, i) => v === targetState[i])) {
+                score += 1000;
+                document.getElementById('score').innerText = score.toString().padStart(4, '0');
+                document.getElementById('winModal').classList.remove('hidden');
+            } else {
+                const b = document.getElementById('submitBtn');
+                b.classList.add('bg-red-600');
+                setTimeout(() => b.classList.remove('bg-red-600'), 500);
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('winModal').classList.add('hidden');
+            generateLevel();
+        }
+
+        window.onload = generateLevel;
+    </script>
+</body>
+</html>
