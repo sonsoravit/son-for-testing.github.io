@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ISO-FOLD // Mobile Fixed</title>
+    <title>ISO-FOLD // Realism Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
@@ -14,12 +14,11 @@
         body { 
             background-color: #020617; color: #f8fafc; font-family: 'Space+Grotesk', sans-serif; 
             overflow: hidden; touch-action: none; 
-            height: 100dvh; /* Dynamic Viewport Height - Fixes mobile browser bars */
+            height: 100dvh;
             display: flex; flex-direction: column;
         }
         .glass { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
         
-        /* Scene and Cube Logic */
         .scene { perspective: 1000px; position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
         .cube { 
             width: var(--cube-size); height: var(--cube-size); position: relative; 
@@ -36,7 +35,7 @@
             backface-visibility: visible; cursor: pointer;
         }
 
-        /* 3D Translation */
+        /* 3D Folded State */
         .f-front  { transform: rotateY(0deg) translateZ(calc(var(--cube-size) / 2)); }
         .f-back   { transform: rotateY(180deg) translateZ(calc(var(--cube-size) / 2)); }
         .f-top    { transform: rotateX(90deg) translateZ(calc(var(--cube-size) / 2)); }
@@ -44,15 +43,15 @@
         .f-left   { transform: rotateY(-90deg) translateZ(calc(var(--cube-size) / 2)); }
         .f-right  { transform: rotateY(90deg) translateZ(calc(var(--cube-size) / 2)); }
 
-        /* Net Translation */
+        /* Unfolded Net State - FIX APPLIED HERE */
         .unfolded .f-front  { transform: rotateY(0) translateZ(0) translate(0, 0); }
-        .unfolded .f-back   { transform: rotateY(0) translateZ(0) translate(0, calc(var(--net-offset) * -2)); }
+        /* Added rotateZ(180deg) to flip the back face icon */
+        .unfolded .f-back   { transform: rotateY(0) translateZ(0) translate(0, calc(var(--net-offset) * -2)) rotateZ(180deg); }
         .unfolded .f-top    { transform: rotateY(0) translateZ(0) translate(0, calc(var(--net-offset) * -1)); }
         .unfolded .f-bottom { transform: rotateY(0) translateZ(0) translate(0, var(--net-offset)); }
         .unfolded .f-left   { transform: rotateY(0) translateZ(0) translate(calc(var(--net-offset) * -1), 0); }
         .unfolded .f-right  { transform: rotateY(0) translateZ(0) translate(calc(var(--net-offset) * 1), 0); }
         
-        /* Mobile Safe Zone Fix */
         footer { padding-bottom: env(safe-area-inset-bottom, 1rem); }
     </style>
 </head>
